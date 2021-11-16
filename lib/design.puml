@@ -1,0 +1,119 @@
+@startuml WeatherApp
+
+skinparam linetype ortho
+skinparam ranksep 20
+skinparam nodesep 50
+skinparam Dpi 300
+
+package Presentation_Layer <<Rectangle>> {
+    class   OverViewScreen {
+        List<WeatherModel> _locations
+    }
+    class   SearchScreen {
+        
+    }
+    class   WeatherOverviewScreen {
+        WeatherModel weather
+    }
+}
+
+package Buisiness_Logic_Layer <<Rectangle>> {
+    class   WeatherListState {
+        List<WeatherModel> selectedLocations
+    }
+    class   WeatherListCubit {
+        addWeatherLocation(): void
+        deleteWeatherLocation(): void
+    }
+
+    abstract class   InternetState {}
+    class   InternetConnected {
+        ConnectionType connectionType
+    }
+    class   InternetDisconnected {}
+    class   InternetCubit {
+        connectivity: Connectivity
+        monitorInternetConnection(): StreamSubscription<ConnectivityResult>
+        emitInternetConnected(ConnectionType _connectionType): void
+        emitInternetDisconnected(): void
+        close(): Future<void>
+    }
+
+    abstract class   SearchState {}
+    class   Searching {}
+    class   SearchFailed {}
+    class   SearchCompleted {
+
+    }
+    class   SearchCubit {}
+
+    enum ConnectionType {
+        Wifi
+        Mobile
+    }
+}
+
+package Data_Layer <<Rectangle>> {
+    class   WeatherModel {
+        main : String
+        description: String
+        icon: Sring
+        temperatur: double
+        feelsLike: double
+        humidity: int
+        windSpeed: double
+        windDegree: int
+        clouds: int
+        sunrise: int
+        sunset: int
+        locationName: String
+        rain: double
+        snow: double
+
+        toJson(): String
+        fromJson(): facotry WeatherModel
+    }
+    class   WeatherRepository {
+        getWeatherForLocation(): Future<Weather>
+    }
+    class   WeatherProvider {
+        getWeatherData(): String
+    }
+}
+
+WeatherRepository --d|> WeatherProvider
+WeatherRepository --r|> WeatherModel
+
+WeatherListCubit --|> WeatherRepository
+
+InternetState --|> InternetConnected
+InternetState --d|> InternetDisconnected
+InternetCubit --|> InternetState
+InternetCubit --|> ConnectionType
+
+SearchState --|> Searching
+SearchState --|> SearchCompleted
+SearchState --|> SearchFailed
+SearchCubit --|> SearchState
+SearchCubit --|> InternetCubit
+SearchCubit --|> WeatherRepository
+
+WeatherListCubit -[hidden]r-> InternetCubit
+InternetCubit -[hidden]r-> SearchCubit
+
+WeatherListState -[hidden]r-> InternetState
+SearchState -[hidden]l-> InternetState
+
+Searching -[hidden]r-> SearchFailed
+SearchCompleted -[hidden]l-> SearchFailed
+
+WeatherListCubit --d|> WeatherListState
+
+OverViewScreen --|> WeatherModel
+OverViewScreen --|> WeatherListCubit
+SearchScreen --|> WeatherModel
+SearchScreen --d|> WeatherListCubit
+SearchScreen --|> SearchCubit
+WeatherOverviewScreen --|> WeatherModel
+
+@enduml
